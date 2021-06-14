@@ -1,0 +1,98 @@
+upstream php {
+    {{#each php.ports}}
+    server {{this}};
+    {{/each}}
+}
+
+server {
+    listen {{ports.server}};
+    root "{{root}}";
+
+    index index.php index.html index.htm;
+
+    #
+    # Generic restrictions for things like PHP files in uploads
+    #
+    include includes/restrictions.conf;
+
+    #
+    # Gzip rules
+    #
+    include includes/gzip.conf;
+
+    #
+    # WordPress Rules
+    #
+    {{#unless multisite}}
+    include includes/wordpress-single.conf;
+    {{else}}
+    include includes/wordpress-multi.conf;
+    {{/unless}}
+
+    #
+    # Static file rules
+    #
+    include includes/location.conf;
+
+    #
+    # PHP-FPM
+    #
+    location ~ \.php$ {
+        try_files $uri =404;
+
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+
+        #
+        # Fast CGI Params
+        #
+        include includes/fastcgi_params.conf;
+
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        fastcgi_pass php;
+        fastcgi_buffer_size 64k;
+        fastcgi_buffers 32 32k;
+        fastcgi_read_timeout 1200s;
+
+        proxy_buffer_size 64k;
+        proxy_buffers 32 32k;
+        proxy_busy_buffers_size 256k;
+    }
+}
+
+
+server {
+    server_name    adminer;
+    listen         {{ports.database_admin}};
+
+    root           "{{mysql.admin.path}}";
+    index          index.php;
+
+    #
+    # Static file rules
+    #
+    include includes/location.conf;
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+
+        #
+        # Fast CGI Params
+        #
+        include includes/fastcgi_params.conf;
+        
+        fastcgi_pass php;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        #
+        # App Parameters
+        #
+        fastcgi_param PS_DB_HOST      "{{localhost}}:{{ports.database}}";
+        fastcgi_param PS_DB_USERNAME  "{{mysql.dbuser}}";
+        fastcgi_param PS_DB_PASSWORD  "{{mysql.dbpass}}";
+        fastcgi_param PS_APP_NAME     "{{title}}";
+    }
+}

@@ -1,0 +1,12 @@
+[mysqld]
+console
+datadir = {{datadir}}
+port = {{ports.database}}
+bind-address = {{localhost}}
+socket = {{socket}}
+
+[client]
+host = {{localhost}}
+port = {{ports.database}}
+user = root
+password = root

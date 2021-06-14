@@ -1,0 +1,31 @@
+location ~ \.css {
+    add_header  Content-Type    text/css;
+}
+
+location ~ \.js {
+    add_header  Content-Type    application/x-javascript;
+}
+
+location ~* \.(?:css|js)$ {
+    access_log off;
+    log_not_found off;
+    add_header Cache-Control "no-cache, public, must-revalidate, proxy-revalidate";
+}
+
+location ~* \.(?:jpg|jpeg|gif|png|ico|xml)$ {
+    access_log off;
+    log_not_found off;
+    expires 5m;
+    add_header Cache-Control "public";
+}
+
+location ~* \.(?:eot|woff|woff2|ttf|svg|otf) {
+    access_log off;
+    log_not_found off;
+
+    expires 5m;
+    add_header Cache-Control "public";
+
+    # allow CORS requests
+    add_header Access-Control-Allow-Origin *;
+}
